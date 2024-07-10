@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class Board
 {
-    public Tile[,] Tiles;
+    public Tile[,] TileArray;
+    public GameObject[,] TileObjectArray;
     public int Width;
     public int Height;
 
@@ -17,12 +18,13 @@ public class Board
 
     public void Init()
     {
-        Tiles = new Tile[Width, Height];
+        TileArray = new Tile[Width, Height];
+        TileObjectArray = new GameObject[Width, Height];
         for (var x = 0; x < Width; x++)
         {
             for (var y = 0; y < Height; y++)
             {
-                Tiles[x, y] = new Tile(x, y);
+                TileArray[x, y] = new Tile(x, y);
             }
         }
     }
@@ -33,37 +35,45 @@ public class Board
         {
             for (var y = 0; y < Height; y++)
             {
-                Tiles[x, y].Clear();
+                TileArray[x, y].Clear();
             }
         }
 
-        Tiles = null;
+        TileArray = null;
+    }
+    
+    public void CreateRandomTile()
+    {
+        
     }
 
     public void MoveRight()
     {
+        var moveTiles = new List<MoveTile>();
         for (var x = Width - 1; x >= 0; x--)
         {
             for (var y = 0; y < Height; y++)
             {
-                if (Tiles[x, y].IsEmpty)
+                if (TileArray[x, y].IsEmpty)
                 {
                     continue;
                 }
-
+                
                 var nextX = x + 1;
                 while (nextX < Width)
                 {
-                    if (Tiles[nextX, y].IsEmpty)
+                    if (TileArray[nextX, y].IsEmpty)
                     {
-                        Tiles[nextX, y].SetScore(Tiles[x, y].Score);
-                        Tiles[x, y].Clear();
+                        TileArray[nextX, y].SetScore(TileArray[x, y].Score);
+                        TileArray[x, y].Clear();
                         x = nextX;
+                        moveTiles.Add(new MoveTile(TileArray[nextX, y], x, y, nextX, y, false));
                     }
-                    else if (Tiles[nextX, y].Score == Tiles[x, y].Score)
+                    else if (TileArray[nextX, y].Score == TileArray[x, y].Score)
                     {
-                        Tiles[nextX, y].SetScore(Tiles[x, y].Score * 2);
-                        Tiles[x, y].Clear();
+                        TileArray[nextX, y].SetScore(TileArray[x, y].Score * 2);
+                        TileArray[x, y].Clear();
+                        moveTiles.Add(new MoveTile(TileArray[nextX, y], x, y, nextX, y, true));
                     }
                     else
                     {
@@ -78,11 +88,12 @@ public class Board
 
     public void MoveLeft()
     {
+        var moveTiles = new List<MoveTile>();
         for (var x = 0; x < Width; x++)
         {
             for (var y = 0; y < Height; y++)
             {
-                if (Tiles[x, y].IsEmpty)
+                if (TileArray[x, y].IsEmpty)
                 {
                     continue;
                 }
@@ -90,16 +101,18 @@ public class Board
                 var nextX = x - 1;
                 while (nextX >= 0)
                 {
-                    if (Tiles[nextX, y].IsEmpty)
+                    if (TileArray[nextX, y].IsEmpty)
                     {
-                        Tiles[nextX, y].SetScore(Tiles[x, y].Score);
-                        Tiles[x, y].Clear();
+                        TileArray[nextX, y].SetScore(TileArray[x, y].Score);
+                        TileArray[x, y].Clear();
                         x = nextX;
+                        moveTiles.Add(new MoveTile(TileArray[nextX, y], x, y, nextX, y, false));
                     }
-                    else if (Tiles[nextX, y].Score == Tiles[x, y].Score)
+                    else if (TileArray[nextX, y].Score == TileArray[x, y].Score)
                     {
-                        Tiles[nextX, y].SetScore(Tiles[x, y].Score * 2);
-                        Tiles[x, y].Clear();
+                        TileArray[nextX, y].SetScore(TileArray[x, y].Score * 2);
+                        TileArray[x, y].Clear();
+                        moveTiles.Add(new MoveTile(TileArray[nextX, y], x, y, nextX, y, true));
                     }
                     else
                     {
@@ -114,11 +127,12 @@ public class Board
 
     public void MoveUp()
     {
+        var moveTiles = new List<MoveTile>();
         for (var y = Height - 1; y >= 0; y--)
         {
             for (var x = 0; x < Width; x++)
             {
-                if (Tiles[x, y].IsEmpty)
+                if (TileArray[x, y].IsEmpty)
                 {
                     continue;
                 }
@@ -126,16 +140,18 @@ public class Board
                 var nextY = y + 1;
                 while (nextY < Height)
                 {
-                    if (Tiles[x, nextY].IsEmpty)
+                    if (TileArray[x, nextY].IsEmpty)
                     {
-                        Tiles[x, nextY].SetScore(Tiles[x, y].Score);
-                        Tiles[x, y].Clear();
+                        TileArray[x, nextY].SetScore(TileArray[x, y].Score);
+                        TileArray[x, y].Clear();
                         y = nextY;
+                        moveTiles.Add(new MoveTile(TileArray[x, nextY], x, y, x, nextY, false));
                     }
-                    else if (Tiles[x, nextY].Score == Tiles[x, y].Score)
+                    else if (TileArray[x, nextY].Score == TileArray[x, y].Score)
                     {
-                        Tiles[x, nextY].SetScore(Tiles[x, y].Score * 2);
-                        Tiles[x, y].Clear();
+                        TileArray[x, nextY].SetScore(TileArray[x, y].Score * 2);
+                        TileArray[x, y].Clear();
+                        moveTiles.Add(new MoveTile(TileArray[x, nextY], x, y, x, nextY, true));
                     }
                     else
                     {
@@ -150,11 +166,12 @@ public class Board
 
     public void MoveDown()
     {
+        var moveTiles = new List<MoveTile>();
         for (var y = 0; y < Height; y++)
         {
             for (var x = 0; x < Width; x++)
             {
-                if (Tiles[x, y].IsEmpty)
+                if (TileArray[x, y].IsEmpty)
                 {
                     continue;
                 }
@@ -162,16 +179,18 @@ public class Board
                 var nextY = y - 1;
                 while (nextY >= 0)
                 {
-                    if (Tiles[x, nextY].IsEmpty)
+                    if (TileArray[x, nextY].IsEmpty)
                     {
-                        Tiles[x, nextY].SetScore(Tiles[x, y].Score);
-                        Tiles[x, y].Clear();
+                        TileArray[x, nextY].SetScore(TileArray[x, y].Score);
+                        TileArray[x, y].Clear();
                         y = nextY;
+                        moveTiles.Add(new MoveTile(TileArray[x, nextY], x, y, x, nextY, false));
                     }
-                    else if (Tiles[x, nextY].Score == Tiles[x, y].Score)
+                    else if (TileArray[x, nextY].Score == TileArray[x, y].Score)
                     {
-                        Tiles[x, nextY].SetScore(Tiles[x, y].Score * 2);
-                        Tiles[x, y].Clear();
+                        TileArray[x, nextY].SetScore(TileArray[x, y].Score * 2);
+                        TileArray[x, y].Clear();
+                        moveTiles.Add(new MoveTile(TileArray[x, nextY], x, y, x, nextY, true));
                     }
                     else
                     {

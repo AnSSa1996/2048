@@ -5,20 +5,19 @@ using UnityEngine;
 public class GameLogicBase
 {
     public static int BOARD_LENGTH = 5;
-    
     public Board Board;
     
-    public virtual void Init()
+    public void Init()
     {
         Board = new Board(BOARD_LENGTH, BOARD_LENGTH);
     }
 
-    public virtual void Update(float time)
+    public void Update(float time)
     {
         
     }
 
-    public virtual void Destroy()
+    public void Destroy()
     {
         
     }
