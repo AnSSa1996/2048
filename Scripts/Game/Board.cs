@@ -4,201 +4,223 @@ using UnityEngine;
 
 public class Board
 {
+    private readonly int _length;
+    
     public Tile[,] TileArray;
-    public GameObject[,] TileObjectArray;
-    public int Width;
-    public int Height;
+    public GameObject[,] TileGameObjectArray;
+    private long Index { get; set; }
 
-    public Board(int width, int height)
+    public Board(int length)
     {
-        Width = width;
-        Height = height;
-        Init();
+        _length = length;
     }
-
+    
     public void Init()
     {
-        TileArray = new Tile[Width, Height];
-        TileObjectArray = new GameObject[Width, Height];
-        for (var x = 0; x < Width; x++)
+        Index = 0;
+        TileArray = new Tile[_length, _length];
+        TileGameObjectArray = new GameObject[_length, _length];
+        for (var x = 0; x < _length; x++)
         {
-            for (var y = 0; y < Height; y++)
+            for (var y = 0; y < _length; y++)
             {
-                TileArray[x, y] = new Tile(x, y);
+                TileArray[y, x] = new Tile(0, true);
             }
         }
+
+        CreateRandomTile();
     }
 
     public void Destroy()
     {
-        for (var x = 0; x < Width; x++)
+        for (var x = 0; x < _length; x++)
         {
-            for (var y = 0; y < Height; y++)
+            for (var y = 0; y < _length; y++)
             {
                 TileArray[x, y].Clear();
+                TileGameObjectArray[x, y].ReleaseGameObject();
+                TileGameObjectArray[x, y] = null;
             }
         }
 
         TileArray = null;
     }
     
-    public void CreateRandomTile()
+    public void Move(Direction direction)
     {
-        
+        Index++;
+        switch (direction)
+        {
+            case Direction.Right:
+                MoveRight();
+                break;
+            case Direction.Left:
+                MoveLeft();
+                break;
+            case Direction.Up:
+                MoveUp();
+                break;
+            case Direction.Down:
+                MoveDown();
+                break;
+        }
+
+        CreateRandomTile();
     }
 
-    public void MoveRight()
+    private void CreateRandomTile()
     {
-        var moveTiles = new List<MoveTile>();
-        for (var x = Width - 1; x >= 0; x--)
+        var emptyTiles = new List<Vector2Int>();
+        for (var x = 0; x < _length; x++)
         {
-            for (var y = 0; y < Height; y++)
+            for (var y = 0; y < _length; y++)
             {
                 if (TileArray[x, y].IsEmpty)
                 {
-                    continue;
+                    emptyTiles.Add(new Vector2Int(x, y));
                 }
-                
-                var nextX = x + 1;
-                while (nextX < Width)
+            }
+        }
+
+        if (emptyTiles.Count == 0) return;
+        var randomIndex = Random.Range(0, emptyTiles.Count);
+        var randomTile = emptyTiles[randomIndex];
+
+        GameManager.Instance.GameLogic.PlayTileAction(new CrateTileTileAction(Index, randomTile.y, randomTile.x));
+    }
+
+    private void MoveRight()
+    {
+        for (var y = 0; y < _length; y++)
+        {
+            for (var x = _length - 1; x >= 0; x--)
+            {
+                if (TileArray[x, y].IsEmpty) continue;
+                var nextX = x;
+                while (nextX + 1 < _length)
                 {
-                    if (TileArray[nextX, y].IsEmpty)
+                    if (TileArray[nextX + 1, y].IsEmpty)
                     {
-                        TileArray[nextX, y].SetScore(TileArray[x, y].Score);
-                        TileArray[x, y].Clear();
-                        x = nextX;
-                        moveTiles.Add(new MoveTile(TileArray[nextX, y], x, y, nextX, y, false));
-                    }
-                    else if (TileArray[nextX, y].Score == TileArray[x, y].Score)
-                    {
-                        TileArray[nextX, y].SetScore(TileArray[x, y].Score * 2);
-                        TileArray[x, y].Clear();
-                        moveTiles.Add(new MoveTile(TileArray[nextX, y], x, y, nextX, y, true));
+                        nextX++;
                     }
                     else
                     {
+                        if (TileArray[nextX + 1, y].Score == TileArray[x, y].Score)
+                        {
+                            GameManager.Instance.GameLogic.PlayTileAction(new DestroyTileTileAction(Index, x, y));
+                            GameManager.Instance.GameLogic.PlayTileAction(new MoveTileTileAction(Index, x, y, nextX + 1, y, true));
+                            nextX++;
+                        }
+
                         break;
                     }
-
-                    nextX++;
                 }
+
+                if (nextX == x) continue;
+                GameManager.Instance.GameLogic.PlayTileAction(new DestroyTileTileAction(Index, x, y));
+                GameManager.Instance.GameLogic.PlayTileAction(new MoveTileTileAction(Index, x, y, nextX, y, false));
             }
         }
     }
 
-    public void MoveLeft()
+    private void MoveLeft()
     {
-        var moveTiles = new List<MoveTile>();
-        for (var x = 0; x < Width; x++)
+        for (var y = 0; y < _length; y++)
         {
-            for (var y = 0; y < Height; y++)
+            for (var x = 0; x < _length; x++)
             {
-                if (TileArray[x, y].IsEmpty)
+                if (TileArray[x, y].IsEmpty) continue;
+                var nextX = x;
+                while (nextX - 1 >= 0)
                 {
-                    continue;
-                }
-
-                var nextX = x - 1;
-                while (nextX >= 0)
-                {
-                    if (TileArray[nextX, y].IsEmpty)
+                    if (TileArray[nextX - 1, y].IsEmpty)
                     {
-                        TileArray[nextX, y].SetScore(TileArray[x, y].Score);
-                        TileArray[x, y].Clear();
-                        x = nextX;
-                        moveTiles.Add(new MoveTile(TileArray[nextX, y], x, y, nextX, y, false));
-                    }
-                    else if (TileArray[nextX, y].Score == TileArray[x, y].Score)
-                    {
-                        TileArray[nextX, y].SetScore(TileArray[x, y].Score * 2);
-                        TileArray[x, y].Clear();
-                        moveTiles.Add(new MoveTile(TileArray[nextX, y], x, y, nextX, y, true));
+                        nextX--;
                     }
                     else
                     {
+                        if (TileArray[nextX - 1, y].Score == TileArray[x, y].Score)
+                        {
+                            GameManager.Instance.GameLogic.PlayTileAction(new DestroyTileTileAction(Index, x, y));
+                            GameManager.Instance.GameLogic.PlayTileAction(new MoveTileTileAction(Index, x, y, nextX - 1, y, true));
+                            nextX--;
+                        }
+
                         break;
                     }
-
-                    nextX--;
                 }
+
+                if (nextX == x) continue;
+                GameManager.Instance.GameLogic.PlayTileAction(new DestroyTileTileAction(Index, x, y));
+                GameManager.Instance.GameLogic.PlayTileAction(new MoveTileTileAction(Index, x, y, nextX, y, false));
             }
         }
     }
 
-    public void MoveUp()
+    private void MoveUp()
     {
-        var moveTiles = new List<MoveTile>();
-        for (var y = Height - 1; y >= 0; y--)
+        for (var x = 0; x < _length; x++)
         {
-            for (var x = 0; x < Width; x++)
+            for (var y = 0; y < _length; y++)
             {
-                if (TileArray[x, y].IsEmpty)
+                if (TileArray[x, y].IsEmpty) continue;
+                var nextY = y;
+                while (nextY - 1 >= 0)
                 {
-                    continue;
-                }
-
-                var nextY = y + 1;
-                while (nextY < Height)
-                {
-                    if (TileArray[x, nextY].IsEmpty)
+                    if (TileArray[x, nextY - 1].IsEmpty)
                     {
-                        TileArray[x, nextY].SetScore(TileArray[x, y].Score);
-                        TileArray[x, y].Clear();
-                        y = nextY;
-                        moveTiles.Add(new MoveTile(TileArray[x, nextY], x, y, x, nextY, false));
-                    }
-                    else if (TileArray[x, nextY].Score == TileArray[x, y].Score)
-                    {
-                        TileArray[x, nextY].SetScore(TileArray[x, y].Score * 2);
-                        TileArray[x, y].Clear();
-                        moveTiles.Add(new MoveTile(TileArray[x, nextY], x, y, x, nextY, true));
+                        nextY--;
                     }
                     else
                     {
+                        if (TileArray[x, nextY - 1].Score == TileArray[x, y].Score)
+                        {
+                            GameManager.Instance.GameLogic.PlayTileAction(new DestroyTileTileAction(Index, x, y));
+                            GameManager.Instance.GameLogic.PlayTileAction(new MoveTileTileAction(Index, x, y, x, nextY - 1, true));
+                            nextY--;
+                        }
+
                         break;
                     }
-
-                    nextY++;
                 }
+
+                if (nextY == y) continue;
+                GameManager.Instance.GameLogic.PlayTileAction(new DestroyTileTileAction(Index, x, y));
+                GameManager.Instance.GameLogic.PlayTileAction(new MoveTileTileAction(Index, x, y, x, nextY, false));
             }
         }
     }
 
-    public void MoveDown()
+    private void MoveDown()
     {
-        var moveTiles = new List<MoveTile>();
-        for (var y = 0; y < Height; y++)
+        for (var x = _length - 1; x >= 0; x--)
         {
-            for (var x = 0; x < Width; x++)
+            for (var y = 0; y < _length; y++)
             {
-                if (TileArray[x, y].IsEmpty)
+                if (TileArray[x, y].IsEmpty) continue;
+                var nextY = y;
+                while (nextY + 1 < _length)
                 {
-                    continue;
-                }
-
-                var nextY = y - 1;
-                while (nextY >= 0)
-                {
-                    if (TileArray[x, nextY].IsEmpty)
+                    if (TileArray[x, nextY + 1].IsEmpty)
                     {
-                        TileArray[x, nextY].SetScore(TileArray[x, y].Score);
-                        TileArray[x, y].Clear();
-                        y = nextY;
-                        moveTiles.Add(new MoveTile(TileArray[x, nextY], x, y, x, nextY, false));
-                    }
-                    else if (TileArray[x, nextY].Score == TileArray[x, y].Score)
-                    {
-                        TileArray[x, nextY].SetScore(TileArray[x, y].Score * 2);
-                        TileArray[x, y].Clear();
-                        moveTiles.Add(new MoveTile(TileArray[x, nextY], x, y, x, nextY, true));
+                        nextY++;
                     }
                     else
                     {
+                        if (TileArray[x, nextY + 1].Score == TileArray[x, y].Score)
+                        {
+                            GameManager.Instance.GameLogic.PlayTileAction(new DestroyTileTileAction(Index, x, y));
+                            GameManager.Instance.GameLogic.PlayTileAction(new MoveTileTileAction(Index, x, y, x, nextY + 1, true));
+                            nextY++;
+                        }
+
                         break;
                     }
-
-                    nextY--;
                 }
+
+                if (nextY == y) continue;
+                GameManager.Instance.GameLogic.PlayTileAction(new DestroyTileTileAction(Index, x, y));
+                GameManager.Instance.GameLogic.PlayTileAction(new MoveTileTileAction(Index, x, y, x, nextY, false));
             }
         }
     }
