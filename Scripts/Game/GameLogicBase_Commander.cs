@@ -34,7 +34,7 @@ public partial class GameLogicBase
     {
         for (var i = 0; i < _tweenList.Count; i++)
         {
-            if (_tweenList[i].IsComplete() == false) continue;
+            if (_tweenList[i].IsActive()) continue;
             _tweenList.RemoveAt(i);
             i--;
         }

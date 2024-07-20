@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : Singleton<GameManager>
+public partial class GameManager : Singleton<GameManager>
 {
     public Transform TileParent;
     public TileColor_SO TileColor_SO;
@@ -16,6 +16,7 @@ public class GameManager : Singleton<GameManager>
 
     public void Update()
     {
+        if (GameLogic == null) return;
         GameLogic.Update(Time.deltaTime);
     }
 
