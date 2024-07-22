@@ -34,6 +34,14 @@ public static class PublicGameHelper
         if (text == null) return;
         text.text = score.ToString();
     }
+    
+    public static void SetTextColorInit(GameObject go)
+    {
+        if (go == null) return;
+        var text = go.GetComponentInChildren<TextMeshProUGUI>();
+        if (text == null) return;
+        text.color = Color.black;
+    }
 
     public static void SetColorScore(GameObject go, long score)
     {

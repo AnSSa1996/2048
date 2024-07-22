@@ -5,9 +5,11 @@ using UnityEngine;
 public partial class GameLogicBase
 {
     public static readonly float ACTION_TIME = 0.5f;
+    public static readonly float ACTION_MOVE_TIME = ACTION_TIME * 0.5f;
+    public static readonly float ACTION_MERGE_TIME = ACTION_TIME * 0.4f;
 
     private const int BOARD_LENGTH = 5;
-    private const float SWIPE_THRESHOLD = 0.2f;
+    private const float SWIPE_THRESHOLD = 0.05f;
 
 
     public bool IsVisible { get; set; }
@@ -39,7 +41,11 @@ public partial class GameLogicBase
     public void Update(float time)
     {
         MouseMove();
-        MouseSwippingCheck();
+        MouseMoveCheck();
+        
+#if UNITY_EDITOR
+        KeyMoveCheck();
+#endif
     }
 
     public void Destroy()
@@ -65,7 +71,7 @@ public partial class GameLogicBase
         }
     }
 
-    private void MouseSwippingCheck()
+    private void MouseMoveCheck()
     {
         if (_isSwiping == false) return;
         var diff = GameManager.Instance.GetMouseOrTouch().Position - _startingTouch;
@@ -92,6 +98,26 @@ public partial class GameLogicBase
         {
             MouseMoveDirection(Direction.Up);
             return;
+        }
+    }
+    
+    private void KeyMoveCheck()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            MouseMoveDirection(Direction.Left);
+        }
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            MouseMoveDirection(Direction.Right);
+        }
+        else if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            MouseMoveDirection(Direction.Up);
+        }
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            MouseMoveDirection(Direction.Down);
         }
     }
 

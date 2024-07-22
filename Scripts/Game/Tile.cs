@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Tile
 {
@@ -72,38 +74,74 @@ public class MoveTileTileAction : TileAction
 
     private void MoveAction()
     {
+        FromTileMoveTween();
+        SetFromTileToTile();
+    }
+
+    private void MergeAction()
+    {
+        FromTileMoveTween();
+        FromTileImageTween();
+        FromTileTextColorTween();
+        ToTileScaleTween();
+    }
+
+    private void SetFromTileToTile()
+    {
+        var fromTile = GameManager.Instance.GameLogic.Board.TileGameObjectArray[_fromY, _fromX];
+        GameManager.Instance.GameLogic.Board.TileGameObjectArray[_fromY, _fromX] = null;
+        GameManager.Instance.GameLogic.Board.TileGameObjectArray[_toY, _toX] = fromTile;
+    }
+
+    private void FromTileMoveTween()
+    {
         var fromTile = GameManager.Instance.GameLogic.Board.TileGameObjectArray[_fromY, _fromX];
         if (fromTile == null) return;
         var rectTransform = fromTile.GetComponent<RectTransform>();
         if (rectTransform == null) return;
-        var fromTileTweenAnimation = rectTransform.DOLocalMove(PublicGameHelper.GetPosition(_toY, _toX), GameLogicBase.ACTION_TIME).SetEase(Ease.OutBounce).Play();
+        var fromTileTweenAnimation = rectTransform.DOLocalMove(PublicGameHelper.GetPosition(_toY, _toX), GameLogicBase.ACTION_MOVE_TIME).SetEase(Ease.Linear).Play();
         GameManager.Instance.GameLogic.AddTween(fromTileTweenAnimation);
-        GameManager.Instance.GameLogic.Board.TileGameObjectArray[_fromY, _fromX] = null;
-        GameManager.Instance.GameLogic.Board.TileGameObjectArray[_toY, _toX] = fromTile;
     }
-    
-    private void MergeAction()
+
+    private void FromTileImageTween()
     {
-         var fromTile = GameManager.Instance.GameLogic.Board.TileGameObjectArray[_fromY, _fromX];
+        var fromTile = GameManager.Instance.GameLogic.Board.TileGameObjectArray[_fromY, _fromX];
         if (fromTile == null) return;
-        var rectTransform = fromTile.GetComponent<RectTransform>();
-        if (rectTransform == null) return;
-        var fromTileTweenAnimation = rectTransform.DOLocalMove(PublicGameHelper.GetPosition(_toY, _toX), GameLogicBase.ACTION_TIME).SetEase(Ease.OutBounce).Play();
-        GameManager.Instance.GameLogic.AddTween(fromTileTweenAnimation);
-        
+        var image = fromTile.GetComponent<Image>();
+        if (image == null) return;
+        var currentColor = image.color;
+        var fromTileTweenAnimationImageColor = image.DOColor(new Color(currentColor.r, currentColor.g, currentColor.b, 0), GameLogicBase.ACTION_MOVE_TIME).Play();
+        GameManager.Instance.GameLogic.AddTween(fromTileTweenAnimationImageColor);
+    }
+
+    private void FromTileTextColorTween()
+    {
+        var fromTile = GameManager.Instance.GameLogic.Board.TileGameObjectArray[_fromY, _fromX];
+        if (fromTile == null) return;
+        var text = fromTile.GetComponentInChildren<TextMeshProUGUI>();
+        if (text == null) return;
+        var currentTextColor = text.color;
+        var fromTileTweenAnimationTextColor = text.DOColor(new Color(currentTextColor.r, currentTextColor.g, currentTextColor.b, 0), GameLogicBase.ACTION_MOVE_TIME).Play();
+        GameManager.Instance.GameLogic.AddTween(fromTileTweenAnimationTextColor);
+    }
+
+    private void ToTileScaleTween()
+    {
         var toTile = GameManager.Instance.GameLogic.Board.TileGameObjectArray[_toY, _toX];
         if (toTile == null) return;
-        var toTileTweenAnimation = toTile.transform.DOScale(new Vector3(1.2f, 1.2f, 1.2f), GameLogicBase.ACTION_TIME / 2f)
-            .SetEase(Ease.OutBounce)
+        var toTileTweenAnimationScale = toTile.transform.DOScale(new Vector3(1.2f, 1.2f, 1.2f), GameLogicBase.ACTION_MERGE_TIME)
+            .SetEase(Ease.Linear)
             .SetLoops(2, LoopType.Yoyo)
-            .OnComplete(SetDisplay)
+            .OnStepComplete(SetDisplay)
             .Play();
-        GameManager.Instance.GameLogic.AddTween(toTileTweenAnimation);
+        GameManager.Instance.GameLogic.AddTween(toTileTweenAnimationScale);
     }
+
 
     private void SetDisplay()
     {
         PublicGameHelper.SetTextScore(GameManager.Instance.GameLogic.Board.TileGameObjectArray[_toY, _toX], _score);
+        PublicGameHelper.SetTextColorInit(GameManager.Instance.GameLogic.Board.TileGameObjectArray[_toY, _toX]);
         PublicGameHelper.SetColorScore(GameManager.Instance.GameLogic.Board.TileGameObjectArray[_toY, _toX], _score);
     }
 }
@@ -133,12 +171,13 @@ public class CrateTileTileAction : TileAction
         if (tileGameObject == null) return;
         GameManager.Instance.GameLogic.Board.TileGameObjectArray[Y, X] = tileGameObject;
         tileGameObject.transform.SetParent(GameManager.Instance.TileParent);
-        tileGameObject.transform.localScale = new Vector3(0,0,0);
+        tileGameObject.transform.localScale = new Vector3(0, 0, 0);
         var tweenAnimation = tileGameObject.transform.DOScale(new Vector3(1, 1, 1), GameLogicBase.ACTION_TIME).SetEase(Ease.OutBounce).Play();
         GameManager.Instance.GameLogic.AddTween(tweenAnimation);
-        
+
         PublicGameHelper.SetPosition(tileGameObject, Y, X);
         PublicGameHelper.SetTextScore(tileGameObject, 2);
+        PublicGameHelper.SetTextColorInit(tileGameObject);
         PublicGameHelper.SetColorScore(tileGameObject, 2);
     }
 }

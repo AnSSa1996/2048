@@ -21,7 +21,7 @@ public partial class GameLogicBase
         _tweenList.Add(tween);
     }
 
-    public void SetTweenSpeed(float speed)
+    private void SetTweenSpeed(float speed)
     {
         CompleteTween();
         foreach (var tween in _tweenList)
