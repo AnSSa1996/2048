@@ -8,7 +8,7 @@ public class Board
 
     public Tile[,] TileArray;
     public GameObject[,] TileGameObjectArray;
-    private long Index { get; set; }
+    public long Index { get; set; }
 
     public Board(int length)
     {
@@ -66,6 +66,7 @@ public class Board
         }
 
         CreateRandomTile();
+        CheckGameOver();
     }
 
     private void CreateRandomTile()
@@ -87,6 +88,21 @@ public class Board
         var randomTile = emptyTiles[randomIndex];
 
         GameManager.Instance.GameLogic.PlayTileAction(new CrateTileTileAction(Index, randomTile.y, randomTile.x));
+    }
+
+    private void CheckGameOver()
+    {
+        for (var x = 0; x < _length; x++)
+        {
+            for (var y = 0; y < _length; y++)
+            {
+                if (TileArray[y, x].IsEmpty) return;
+                if (x + 1 < _length && TileArray[y, x].Score == TileArray[y, x + 1].Score) return;
+                if (y + 1 < _length && TileArray[y, x].Score == TileArray[y + 1, x].Score) return;
+            }
+        }
+
+        GameManager.Instance.GameLogic.GameOver();
     }
 
     private void MoveRight()

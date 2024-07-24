@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 public partial class GameManager : Singleton<GameManager>
@@ -12,12 +13,19 @@ public partial class GameManager : Singleton<GameManager>
     public void Start()
     {
         Init();
+        DOTween.SetTweensCapacity(10000, 1000);
     }
 
     public void Update()
     {
         if (GameLogic == null) return;
         GameLogic.Update(Time.deltaTime);
+    }
+
+    public void RandomSkip()
+    {
+        if (GameLogic == null) return;
+        GameLogic.RandomMove();
     }
 
     private void Init()

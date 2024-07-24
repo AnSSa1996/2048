@@ -4,6 +4,7 @@ using UnityEngine;
 
 public partial class GameLogicBase
 {
+    
     public static readonly float ACTION_TIME = 0.5f;
     public static readonly float ACTION_MOVE_TIME = ACTION_TIME * 0.5f;
     public static readonly float ACTION_MERGE_TIME = ACTION_TIME * 0.4f;
@@ -11,14 +12,15 @@ public partial class GameLogicBase
     private const int BOARD_LENGTH = 5;
     private const float SWIPE_THRESHOLD = 0.05f;
 
-
-    public bool IsVisible { get; set; }
-    public Board Board { get; private set; }
-
-    private int _gameSpeed;
-
-    private Vector2 _startingTouch;
-    private bool _isSwiping;
+    private int _gameSpeed = 1;
+    
+    private Vector2 _startingTouch = Vector2.zero;
+    private bool _isSwiping = false;
+    
+    public Board Board { get; private set; } = null;
+    private bool IsVisible { get; set; } = true;
+    private bool IsGameOver { get; set; } = false;
+    private bool IsRandomMove { get; set; } = false;
 
     public int GameSpeed
     {
@@ -36,25 +38,56 @@ public partial class GameLogicBase
         IsVisible = true;
         Board = new Board(BOARD_LENGTH);
         Board.Init();
+        
+        GameSpeed = 1;
+        
+        _startingTouch = Vector2.zero;
+        _isSwiping = false;
+
+        IsGameOver = false;
     }
 
     public void Update(float time)
     {
-        MouseMove();
-        MouseMoveCheck();
-        
-#if UNITY_EDITOR
-        KeyMoveCheck();
-#endif
+        var deltaTime = time * GameSpeed;
+        UpdateMove();
+        UpdateRandomMove();
     }
 
     public void Destroy()
     {
     }
 
+    public void GameOver()
+    {
+        IsGameOver = true;
+    }
+
     public void SetGameSpeed(int speed)
     {
         GameSpeed = speed;
+    }
+    
+    public void RandomMove()
+    {
+        IsRandomMove = !IsRandomMove;
+    }
+
+    private void UpdateMove()
+    {
+        MouseMove();
+        MouseMoveCheck();
+#if UNITY_EDITOR
+        KeyMoveCheck();
+#endif
+    }
+    
+    private void UpdateRandomMove()
+    {
+        if (IsRandomMove == false) return;
+        if (IsGameOver) return;
+        var randDirection = (Direction) Random.Range(0, 4);
+        MoveDirection(randDirection);
     }
 
     private void MouseMove()
@@ -78,25 +111,25 @@ public partial class GameLogicBase
         diff = new Vector2(diff.x / Screen.width, diff.y / Screen.width);
         if (diff.x < -SWIPE_THRESHOLD)
         {
-            MouseMoveDirection(Direction.Left);
+            MoveDirection(Direction.Left);
             return;
         }
 
         if (diff.x > SWIPE_THRESHOLD)
         {
-            MouseMoveDirection(Direction.Right);
+            MoveDirection(Direction.Right);
             return;
         }
 
         if (diff.y < -SWIPE_THRESHOLD)
         {
-            MouseMoveDirection(Direction.Down);
+            MoveDirection(Direction.Down);
             return;
         }
 
         if (diff.y > SWIPE_THRESHOLD)
         {
-            MouseMoveDirection(Direction.Up);
+            MoveDirection(Direction.Up);
             return;
         }
     }
@@ -105,25 +138,26 @@ public partial class GameLogicBase
     {
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            MouseMoveDirection(Direction.Left);
+            MoveDirection(Direction.Left);
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            MouseMoveDirection(Direction.Right);
+            MoveDirection(Direction.Right);
         }
         else if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            MouseMoveDirection(Direction.Up);
+            MoveDirection(Direction.Up);
         }
         else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
-            MouseMoveDirection(Direction.Down);
+            MoveDirection(Direction.Down);
         }
     }
 
-    private void MouseMoveDirection(Direction direction)
+    private void MoveDirection(Direction direction)
     {
         _isSwiping = false;
+        SkipCommander();
         Board.Move(direction);
     }
 }

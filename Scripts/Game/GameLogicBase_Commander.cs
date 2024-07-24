@@ -5,10 +5,10 @@ using UnityEngine;
 
 public partial class GameLogicBase
 {
-    private readonly List<TileAction> _commanderList = new List<TileAction>();
+    private readonly List<ITileAction> _commanderList = new List<ITileAction>();
     private readonly List<Tween> _tweenList = new List<Tween>();
 
-    public void PlayTileAction(TileAction action)
+    public void PlayTileAction(ITileAction action)
     {
         action.OnAction();
         if (IsVisible) action.OnGameObjectAction();
@@ -19,6 +19,14 @@ public partial class GameLogicBase
     {
         CompleteTween();
         _tweenList.Add(tween);
+    }
+
+    private void SkipCommander()
+    {
+        var preCommanderList = _commanderList.FindAll(x => x.Index == GameManager.Instance.GameLogic.Board.Index);
+        if (preCommanderList.Count == 0) return;
+        preCommanderList.ForEach(x => x.OnGameObjectSkipAction());
+        _commanderList.Clear();
     }
 
     private void SetTweenSpeed(float speed)
