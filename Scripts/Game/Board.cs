@@ -105,6 +105,7 @@ public class Board
         GameManager.Instance.GameLogic.GameOver();
     }
 
+    // TODO : 함수화 하기
     private void MoveRight()
     {
         for (var y = 0; y < _length; y++)
